@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Web lights</title>
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://use.fontawesome.com/releases/v5.8.2/css/all.css"
+    />
+    <!-- Bootstrap core CSS -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Material Design Bootstrap -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.10.1/css/mdb.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <style>
+    .hidden {
+      display: none;
+    }
+  </style>
+  <body>
+    <div class="container">
+      <h1 class="display-3 text-center" id="TitleApp">Web lights</h1>
+
+      <div class="d-flex justify-content-center">
+        <button id="so" class="btn btn-success">enceder</button>
+        <button id="soapagar" class="btn btn-danger">Apagar</button>
+      </div>
+      <div class="text-center">
+        <p id="inform" class="text-danger h3"></p>
+      </div>
+
+      <form>
+        <div class="row">
+          <div class="col">
+            <input
+              type="text"
+              class="form-control"
+              id="InputAutor"
+              placeholder="Dime tu nombre..."
+            />
+          </div>
+          <div class="col">
+            <button
+              type="button"
+              id="btnSend"
+              class="btn btn-block btn-outline-dark"
+            >
+              Guardar mi nombre
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <!-- JQuery -->
+    <script
+      type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"
+    ></script>
+    <!-- Bootstrap tooltips -->
+    <script
+      type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.4/umd/popper.min.js"
+    ></script>
+    <!-- Bootstrap core JavaScript -->
+    <script
+      type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"
+    ></script>
+    <!-- MDB core JavaScript -->
+    <script
+      type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.10.1/js/mdb.min.js"
+    ></script>
+
+    <script>
+
+      // enlave de recurso
+      // https://blog.tednologia.com/detectar-sistema-operativo-con-javascript/#:~:text=Javascript%20tiene%20un%20objeto%20llamado,Sistema%20Operativo%20que%20estamos%20usando.&text=Este%20c%C3%B3digo%20sera%20puestro%20dentro%20del%20body.
+      const socket = io();
+      const btnOn = document.querySelector("#so");
+      const btnOff = document.querySelector("#soapagar");
+      const inform = document.querySelector("#inform");
+
+      var navInfo = window.navigator.appVersion.toLowerCase();
+      var so = "Sistema Operativo";
+      function retornarSO() {
+        if (navInfo.indexOf("win") != -1) {
+          so = "Windows";
+          console.log(so)
+          socket.emit("pcOff", so);
+        } else if (navInfo.indexOf("linux") != -1) {
+          so = "Linux";
+          socket.emit("pcOff", so);
+        } else if (navInfo.indexOf("mac") != -1) {
+          so = "Macintosh";
+          socket.emit("pcOff", so);
+        }
+        return so;
+      }
+      retornarSO();
+      btnOn.addEventListener("click", (e) => {
+        e.preventDefault();
+        socket.emit("on", "enceder");
+        inform.innerHTML = "On";
+      });
+
+      btnOff.addEventListener("click", (e) => {
+        e.preventDefault();
+        socket.emit("off", "apagar");
+        inform.innerHTML = "Off";
+      });
+
+      const TitleApp = document.getElementById("TitleApp");
+      const InputAutor = document.getElementById("InputAutor");
+      const btnSend = document.getElementById("btnSend");
+
+      btnSend.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (InputAutor.value.trim().length > 0) {
+          localStorage.setItem("TitleLights", InputAutor.value.trim());
+          TitleApp.innerHTML = InputAutor.value.trim();
+          socket.emit("messages", InputAutor.value.trim());
+
+          showBtn();
+        }
+      });
+
+      socket.on("sendMessages", (data) => {
+        console.log(data);
+      });
+
+      function showBtn() {
+        btnOff.classList.remove("hidden");
+        btnOn.classList.remove("hidden");
+      }
+
+      (() => {
+        if (localStorage.getItem("TitleLights") === null) {
+          btnOff.classList.add("hidden");
+          btnOn.classList.add("hidden");
+          return (TitleApp.innerHTML = "No me as dicho tu nombre");
+        }
+
+        if (localStorage.getItem("TitleLights").length > 0) {
+          TitleApp.innerHTML = localStorage.getItem("TitleLights");
+          btnOff.classList.remove("hidden");
+          btnOn.classList.remove("hidden");
+        } else {
+          TitleApp.innerHTML = "No me as dicho tu nombre";
+        }
+      })();
+    </script>
+  </body>
+</html>
